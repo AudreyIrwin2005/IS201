@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bottle Flip Battle</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f0f0;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    nav {
+      width: 100%;
+      background-color: #333;
+      padding: 10px 20px;
+      box-sizing: border-box;
+      display: flex;
+      justify-content: flex-start;
+      gap: 10px;
+    }
+
+    nav a {
+      color: white;
+      background-color: #2196F3;
+      padding: 8px 14px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: bold;
+      transition: background-color 0.3s ease;
+    }
+
+    nav a:hover {
+      background-color: #1976D2;
+    }
+
+    h1 {
+      margin: 20px 0 10px;
+    }
+
+    .scoreboard {
+      font-size: 1.2em;
+      margin-bottom: 10px;
+    }
+
+    .bottles {
+      display: flex;
+      gap: 50px;
+      margin: 30px 0;
+    }
+
+    .bottle-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 30px;
+      margin-bottom: 20px;
+    }
+
+    .bottle {
+      width: 60px;
+      height: 120px;
+      background: linear-gradient(to top, #4CAF50, #81C784);
+      border-radius: 15px;
+      position: relative;
+      transform-origin: bottom center;
+      transition: transform 1s ease;
+    }
+
+    .bottle::after {
+      content: '';
+      position: absolute;
+      top: -15px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 20px;
+      height: 15px;
+      background: #2E7D32;
+      border-radius: 5px;
+    }
+
+    .result {
+      font-weight: bold;
+      min-height: 1.2em;
+      margin-top: 20px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 1em;
+      border: none;
+      background-color: #2196F3;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background-color: #1976D2;
+    }
+
+    .winner {
+      font-size: 1.5em;
+      margin-top: 30px;
+    }
+
+    #splashEffect {
+      font-size: 2em;
+      color: #2196F3;
+      margin-top: 10px;
+    }
+
+    #medalEffect {
+      font-size: 2em;
+      margin-top: 10px;
+    }
+
+    #gameOverText {
+      margin-top: 20px;
+      font-size: 1.2em;
+      font-weight: bold;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="index.html">Resume</a>
+    <a href="scratch.html">Scratch Page</a>
+  </nav>
+
+  <h1>Bottle Flip Battle: You vs Computer</h1>
+  <h2>First to 5 wins!!</h2>
+  <div class="scoreboard" id="scoreboard">You: 0 | Computer: 0</div>
+
+  <div class="bottles">
+    <div class="bottle-container">
+      <div id="playerBottle" class="bottle"></div>
+      <div class="result" id="playerResult"></div>
+    </div>
+    <div class="bottle-container">
+      <div id="computerBottle" class="bottle"></div>
+      <div class="result" id="computerResult"></div>
+    </div>
+  </div>
+
+  <button id="flipButton" onclick="playRound()">Flip!</button>
+  <div class="winner" id="winner"></div>
+  <div id="splashEffect"></div>
+  <div id="medalEffect"></div>
+  <div id="gameOverText"></div>
+  <button id="playAgainButton" style="display:none;" onclick="resetGame()">Play Again</button>
+
+  <script>
+    let playerScore = 0;
+    let computerScore = 0;
+    const winningScore = 5;
+    let tiebreaker = false;
+
+    function flipBottle(bottleElement) {
+      return new Promise(resolve => {
+        bottleElement.style.transition = 'none';
+        bottleElement.style.transform = 'rotate(0deg)';
+
+        setTimeout(() => {
+          bottleElement.style.transition = 'transform 1s ease';
+          const flips = Math.floor(Math.random() * 2 + 1);
+          const degrees = 360 * flips;
+          bottleElement.style.transform = `rotate(${degrees}deg)`;
+
+          setTimeout(() => {
+            const landed = Math.random() < 0.5;
+            if (!landed) {
+              bottleElement.style.transform += ' rotate(90deg)';
+            }
+            resolve(landed);
+          }, 1000);
+        }, 50);
+      });
+    }
+
+    async function playRound() {
+      const flipButton = document.getElementById('flipButton');
+      flipButton.disabled = true;
+
+      const playerBottle = document.getElementById('playerBottle');
+      const computerBottle = document.getElementById('computerBottle');
+      const playerResult = document.getElementById('playerResult');
+      const computerResult = document.getElementById('computerResult');
+      const scoreboard = document.getElementById('scoreboard');
+      const winner = document.getElementById('winner');
+      const splash = document.getElementById('splashEffect');
+      const medal = document.getElementById('medalEffect');
+      const gameOverText = document.getElementById('gameOverText');
+      const playAgainButton = document.getElementById('playAgainButton');
+
+      splash.textContent = '';
+      medal.textContent = '';
+      winner.textContent = '';
+      gameOverText.textContent = '';
+      playerResult.textContent = '';
+      computerResult.textContent = '';
+
+      const playerLanded = await flipBottle(playerBottle);
+      playerResult.textContent = playerLanded ? 'Landed! 🎉' : 'Missed 💥';
+      if (playerLanded) playerScore++;
+
+      const computerLanded = await flipBottle(computerBottle);
+      computerResult.textContent = computerLanded ? 'Landed! 🤖' : 'Missed 💢';
+      if (computerLanded) computerScore++;
+
+      scoreboard.textContent = `You: ${playerScore} | Computer: ${computerScore}`;
+
+      if (playerScore >= winningScore && computerScore >= winningScore && !tiebreaker) {
+        winner.textContent = "It's a tie! Tiebreaker round begins!";
+        tiebreaker = true;
+        flipButton.disabled = false;
+        return;
+      }
+
+      if ((playerScore >= winningScore || computerScore >= winningScore) && (!tiebreaker || (tiebreaker && playerScore !== computerScore))) {
+        flipButton.disabled = true;
+        playAgainButton.style.display = 'inline-block';
+        flipButton.style.display = 'none';
+
+        if (playerScore > computerScore) {
+          winner.textContent = 'You Win! 🏆';
+          medal.textContent = '🥇 Medal Unlocked!';
+        } else {
+          winner.textContent = 'Computer Wins! 💻';
+          splash.textContent = '💦 SPLASH! You LOST!';
+        }
+
+        gameOverText.textContent = 'Game Over';
+      } else {
+        flipButton.disabled = false;
+      }
+    }
+
+    function resetGame() {
+      playerScore = 0;
+      computerScore = 0;
+      tiebreaker = false;
+
+      document.getElementById('playerResult').textContent = '';
+      document.getElementById('computerResult').textContent = '';
+      document.getElementById('winner').textContent = '';
+      document.getElementById('splashEffect').textContent = '';
+      document.getElementById('medalEffect').textContent = '';
+      document.getElementById('gameOverText').textContent = '';
+      document.getElementById('scoreboard').textContent = 'You: 0 | Computer: 0';
+
+      document.getElementById('flipButton').textContent = 'Flip!';
+      document.getElementById('flipButton').disabled = false;
+      document.getElementById('flipButton').style.display = 'inline-block';
+      document.getElementById('playAgainButton').style.display = 'none';
+
+      document.getElementById('playerBottle').style.transform = 'rotate(0deg)';
+      document.getElementById('computerBottle').style.transform = 'rotate(0deg)';
+    }
+  </script>
+
+</body>
+</html>
